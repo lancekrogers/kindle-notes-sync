@@ -1,95 +1,115 @@
-# kindle-notes-sync
+<p align="center">
+  <img src="docs/assets/hero.jpg" width="880" alt="Kindle Scribe with handwritten notes on a desk next to a laptop showing a notes git repo">
+</p>
 
-Export Kindle Scribe notebooks to a **git remote you control**, from the Scribe itself.
+<h1 align="center">kindle-notes-sync</h1>
 
-Write in the stock Notebook tab. Close it. Tap **Notes Sync**. The device commits and pushes. No computer has to be on for the push.
+<p align="center">
+  <b>Write on the Scribe. Keep the notebooks in git you own.</b>
+</p>
 
-This is **not** a replacement notes app. Amazon still draws the notebook and still owns the `.nbk` format. We copy what is already on disk.
+<p align="center">
+  Kindle Scribe · notebooks · folders · GitHub from the device<br>
+  firmware 5.19.5 · <code>kindlehf</code> · no computer left running
+</p>
 
-Tested on a first-gen Scribe, firmware 5.19.5, after a public jailbreak (Véra) plus [kindle-userspace](https://github.com/lancekrogers/kindle-userspace) (Wi-Fi SSH, musl git).
+<p align="center">
+  <a href="https://github.com/lancekrogers/kindle-notes-sync/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-444444?style=flat-square" alt="MIT"></a>
+  <a href="https://github.com/lancekrogers/kindle-userspace"><img src="https://img.shields.io/badge/needs-kindle--userspace-2ea44f?style=flat-square" alt="needs kindle-userspace"></a>
+  <img src="https://img.shields.io/badge/Kindle-Scribe_5.19.5-111111?style=flat-square" alt="Kindle Scribe 5.19.5">
+  <img src="https://img.shields.io/badge/kindlehf-linux%2Farm-6e7781?style=flat-square" alt="kindlehf">
+</p>
 
-**This repo is private until review.** Do not open-source it with notebooks, keys, or lab notes in the tree.
+<p align="center">
+  <a href="docs/guide.md">Guide</a> ·
+  <a href="docs/faq.md">FAQ</a> ·
+  <a href="https://github.com/lancekrogers/kindle-userspace">kindle-userspace</a> ·
+  <a href="https://github.com/lancekrogers">@lancekrogers</a> ·
+  <a href="LICENSE">MIT</a>
+</p>
 
-## What you get
+Amazon will email you a PDF if you ask nicely. This repo does the thing people actually want: **export Kindle Scribe notebooks and folders to GitHub from the Scribe itself.**
 
-```text
-Scribe Notebook tab
-        │  Amazon saves
-        ▼
-/mnt/us/.notebooks/<uuid>/nbk      ink, if it is on disk
-/var/local/ksdk.content.db         titles + folders
-        │  notes-sync
-        ▼
-/mnt/us/notes/notebooks/<Folder>/<Title>/
-        │  git + dropbear dbclient
-        ▼
-your private GitHub (or other) remote
-```
+Close the notebook. Tap **Notes Sync**. Wi-Fi on. The Kindle commits `/mnt/us/notes` and `git push`es. Your computer is optional until you `git pull`.
 
-On the computer you only `git pull`.
+Pairs with [**kindle-userspace**](https://github.com/lancekrogers/kindle-userspace) (SSH, musl git, vim on the same device). Same author, same Scribe, same stance: you bought the hardware.
 
-## You still do not control
+## The loop
 
-Amazon boots the device. Secure boot, signed firmware, the Notebook UI, WhisperSync, and the `.nbk` format stay theirs. This tool is L1 userspace: we read local files and push copies.
+<p align="center">
+  <img src="docs/assets/writing.jpg" width="880" alt="Hand writing on a Kindle Scribe, laptop in the background">
+</p>
 
-## Needs
+| On the Scribe | On GitHub |
+|---|---|
+| Stock Notebook tab, your folders, your ink | `notebooks/Work/…`, `notebooks/Sketches/…` |
+| Close the notebook (Amazon autosaves) | Cover PNG + raw `.nbk` + `INDEX.md` |
+| Tap **Notes Sync** | `git pull` whenever you want the files |
 
-- Jailbroken **kindlehf** Scribe (Véra covers 5.17.1–5.19.6)
-- [USBNetLite](https://github.com/notmarek/kindle-usbnetlite) khf (`dbclient`)
-- musl git on `/mnt/us` — [kindle-userspace](https://github.com/lancekrogers/kindle-userspace)
-- Wi-Fi that can reach GitHub
-- A **private** git remote and a **write** deploy key
+No USB cable. **Start SSH** is not part of this. Push goes out over `dbclient`.
 
-Do not tap Toggle USBNet. Start dropbear with the userspace `start-ssh` script if you need a shell.
+## Why this exists
+
+Kindle Scribe notebooks live in a hidden `.notebooks` tree and a library DB Amazon does not document. USB file managers do not show the folder tab. WhisperSync copies ink to Amazon, not to a repo you control.
+
+`notes-sync` reads `/var/local/ksdk.content.db` for titles and folders, copies every `.nbk` that is actually on disk, and pushes to a **private** remote with a write deploy key.
+
+## Works on
+
+- First-gen Kindle Scribe, firmware **5.19.5** (the unit this was written against)
+- After a public jailbreak (Véra covers 5.17.1–5.19.6)
+- [kindle-userspace](https://github.com/lancekrogers/kindle-userspace) git + [USBNetLite](https://github.com/notmarek/kindle-usbnetlite) khf (`dbclient`)
+- A **private** git remote. Do not point a write key at a public notes repo.
+
+**Not a jailbreak.** Bring your own Véra. No hotfix books, no firmware dumps, no DRM tools.
 
 ## Install
 
 ```bash
-# 1. Device already has start-ssh + git. From this repo:
-just push kindle                 # or: ./scripts/push-to-device.sh kindle
+# device already has start-ssh + musl git from kindle-userspace
+just push kindle                 # scp + install the scriptlet
+just setup-remote                # dropbear deploy key; add the pubkey (write) on GitHub
 
-# 2. Deploy key (dropbear format — OpenSSH PEM fails on dbclient)
-just setup-remote                # prints the pubkey
-# GitHub → repo Settings → Deploy keys → allow write
-# scp the .dropbear key to /mnt/us/.ssh/id_scribe_notes
-
-# 3. On the Scribe
-cd /mnt/us/notes
-git init
-git remote add origin git@github.com:YOU/PRIVATE-NOTES.git
-
-# 4. Proof
+ssh kindle 'cd /mnt/us/notes && git init && git remote add origin git@github.com:YOU/PRIVATE-NOTES.git'
 ssh kindle sh /mnt/us/bin/notes-sync selfcheck
 ```
 
-Then: close a notebook → tap **Notes Sync** → `git pull` on the computer.
-
-## Commands on the device
+Then: write → close → tap **Notes Sync** → `git pull`.
 
 ```sh
 notes-sync            # export + commit + push
 notes-sync export     # write notebooks/ only
-notes-sync push       # commit + push
+notes-sync push
 notes-sync selfcheck
 ```
 
-Config: `/mnt/us/notes-sync.conf` (see `scripts/notes-sync.conf.example`).
+Full pipe, key conversion, FAT gotchas: [guide](docs/guide.md).
 
-## Honest limits
+## What it will not do
 
 | Limit | Why |
-|-------|-----|
-| Not automatic | No watcher. Draw does not push. Tap **Notes Sync**. |
-| `MISSING` notebooks | Amazon left the title in the library DB but no `.nbk` on disk. Open it once. |
-| `.nbk` is Amazon's | Stock `sqlite3` will not open it. Covers are PNG. PDF conversion is a computer-side job. |
-| Start SSH ≠ GitHub | `start-ssh` is a dropbear **server**. Push uses `dbclient` **out**. |
+|---|---|
+| No auto-push on stroke | There is no watcher. You tap **Notes Sync**. |
+| `MISSING` in `INDEX.md` | Title is in Amazon's library DB; the `.nbk` is still in their cloud. Open that notebook once. |
+| `.nbk` is Amazon's | Stock `sqlite3` will not open it. Covers are PNG. Render to PDF on a computer if you want. |
+| Amazon still boots | This is userspace. We copy files. We do not replace the Notebook app. |
+
+## More Kindle tools
+
+| Repo | What |
+|---|---|
+| [kindle-userspace](https://github.com/lancekrogers/kindle-userspace) | Wi-Fi SSH, git 2.47, vim 9.1 on `/mnt/us` after Véra |
+| [kindle-notes-sync](https://github.com/lancekrogers/kindle-notes-sync) | This. Scribe notebooks → git from the device |
+
+Other work: [github.com/lancekrogers](https://github.com/lancekrogers)
 
 ## Docs
 
-- [Guide](docs/guide.md) — mechanism, reinstall, gotchas
-- [FAQ](docs/faq.md)
-- [Review notes](docs/review-notes.md) — what to decide before this is public
-- [Security](SECURITY.md)
+| | |
+|--|--|
+| [Guide](docs/guide.md) | Mechanism, reinstall, dropbear keys, scriptlets |
+| [FAQ](docs/faq.md) | Missing notebooks, Start SSH vs GitHub, PDF |
+| [SECURITY](SECURITY.md) | No keys, no notebooks, no lab dumps in this tree |
 
 ## License
 

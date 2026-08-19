@@ -1,6 +1,6 @@
 # Review notes (keep this file until the repo is public)
 
-Private on purpose. Read this before flipping the GitHub visibility switch or merging into kindle-userspace.
+Private on purpose. README is written as if this will be public (hero, topics, profile links). Flip visibility when you are done reading. Do not merge into kindle-userspace by accident.
 
 ## Why this is a separate repo
 
