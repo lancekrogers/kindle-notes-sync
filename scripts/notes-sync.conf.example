@@ -1,0 +1,9 @@
+# Copy to /mnt/us/notes-sync.conf on the device. Sourced by notes-sync.
+# The payload remote must be private.
+
+NOTES=/mnt/us/notes
+DEPLOY_KEY=/mnt/us/.ssh/id_scribe_notes
+BRANCH=main
+REMOTE=origin
+REPO_TITLE=scribe-notes
+PULL_HINT='git pull'

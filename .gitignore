@@ -1,0 +1,11 @@
+.DS_Store
+*.swp
+work/
+*.nbk
+*.dropbear
+id_scribe_notes
+id_scribe_notes.openssh
+id_scribe_notes.pub
+notes-sync.log
+notebooks/
+raw/
