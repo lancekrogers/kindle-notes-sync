@@ -39,6 +39,7 @@ CMD=${1:-all}
 
 say() {
   echo "$1"
+  [ "$NOTES_SYNC_QUIET" = 1 ] && return
   if [ -x "$FBINK" ]; then
     "$FBINK" -q -pmM -y 4 "$1" || true
   fi
